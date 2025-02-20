@@ -1,38 +1,39 @@
-import mongoose, { Mongoose, Schema, model } from "mongoose";
-import User from "./user.model";
+import { Schema, model } from "mongoose";
 
-const fileSchema = new Schema({
-  fileId: {
-    type: String,
-    required: true,
-    unique: true,
+const FileSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      required: true
+    },
+    size: {
+      type: Number,
+      required: true,
+    },
+    key: {
+      type: String,
+      required: true,
+    },
+    avatar: {
+      type: String,
+    },
+    admin: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    sharedWith: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
-  fileName: {
-    type: String,
-    required: true,
-  },
-  fileType: {
-    type: String,
-    enum: ["image", "video", "pdf", "document", "audio"],
-    required: true,
-  },
-  fileUrl: {
-    type: String,
-    required: true,
-  },
-  uploadDate: {
-    type: Date,
-    default: Date.now,
-  },
-  uploadedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: User,
-  },
-  fileSize: {
-    type: Number,
-    required: true,
-  },
-});
+  { timestamps: true }
+);
 
-const File = model("File", fileSchema);
-export default File;
+export const fileModel = model("File", FileSchema);

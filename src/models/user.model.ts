@@ -1,46 +1,34 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from "mongoose";
 
-const userSchema = new Schema({
-  userId: {
-    type: String,
-    required: true,
-    unique: true
-  },
-
-  fullName: {
-    type: String,
-    required: true
-  },
-
+const UserSchema = new Schema({
   email: {
     type: String,
     required: true,
     unique: true,
-    lowercase: true,
-    match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'Please fill a valid email address']
   },
-
   password: {
     type: String,
-    required: true
+    required: true,
   },
-
-  profilePicture: {
+  fullName: {
     type: String,
-    required: false
+    required: true,
   },
-
-  uploadedFiles: [{
-    type: Schema.Types.ObjectId,
-    ref: 'File',
-    required: false
-  }],
-
-  createdAt: {
-    type: Date,
-    default: Date.now
+  avatar: {
+    type: String,
+    required: false,
   },
+  isPremium: {
+    type: Boolean,
+    default: false,
+  },
+  files: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "File",
+      default: [],
+    },
+  ],
 });
 
-const User = model('User', userSchema);
-export default User;
+export const userModel = model("User", UserSchema);

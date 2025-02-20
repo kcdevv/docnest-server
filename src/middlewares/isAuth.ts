@@ -1,18 +1,19 @@
 import { Request, Response, NextFunction } from "express";
-import verifyToken from "./verifyToken";
+import { verifyToken } from "../utils/verifyToken";
+import { JwtPayload } from "jsonwebtoken";
 
 const isAuth = (req: Request, res: Response, next: NextFunction) => {
-  const { token } = req.cookies;
-  const isVerified = verifyToken(token);
-  if (isVerified && typeof isVerified !== "string") {
-    // console.log(isVerified.userId);
-    // @ts-ignore
-    req.userId = isVerified.userId;
+  const token = req.headers.authorization || req.cookies.token;
+  const isVerified = verifyToken(token) as JwtPayload;
+  if (isVerified) {
+    req.userId = isVerified.id;
+    console.log(req.userId);
     next();
   } else {
     res.status(401).json({
       message: "Unauthorized access",
     });
+    return;
   }
 };
 

@@ -1,10 +1,11 @@
-import express, { Request, Response, NextFunction } from "express";
-import { uploadFile, getFiles } from "../controllers/file.controller";
+import { Router } from "express";
+import { deleteFile, generateUploadURL, getDownloadUrl, saveFile, uploadFile } from "../controllers/file.controller";
 import isAuth from "../middlewares/isAuth";
 
-const fileRouter = express.Router();
+export const fileRouter = Router();
 
 fileRouter.post("/upload", isAuth, uploadFile);
-fileRouter.get("/files",getFiles);
-
-export default fileRouter;
+fileRouter.post("/puturl", isAuth, generateUploadURL);
+fileRouter.post("/save-file", isAuth, saveFile);
+fileRouter.post("/download",isAuth,getDownloadUrl);
+fileRouter.delete("/:fileId",isAuth,deleteFile);
