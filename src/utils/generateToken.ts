@@ -1,11 +1,10 @@
 import { sign } from "jsonwebtoken";
 import dotenv from "dotenv";
+import getSecret from "./getSecret";
 dotenv.config();
 
-console.log(process.env.JWT_SECRET);
-
 export const generateToken = (id: string) => {
-  return sign({ id }, process.env.JWT_SECRET ?? "secret", {
+  return sign({ id }, getSecret(), {
     expiresIn: "30d",
   });
 };

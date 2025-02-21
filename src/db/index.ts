@@ -3,10 +3,10 @@ import { config } from "dotenv";
 
 const connectDB = async () => {
   try {
-    const dbUrl = process.env.MONGO_URI ?? "";
+    const dbUrl = "mongodb://localhost:27017/files";
     await mongoose.connect(dbUrl);
     const db = mongoose.connection;
-    db.on("connection", () => {
+    db.on("open", () => {
       console.log("Connected to database");
     });
     db.on("error", () => {

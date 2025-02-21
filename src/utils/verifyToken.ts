@@ -1,11 +1,12 @@
 import { verify } from "jsonwebtoken";
 import dotenv from "dotenv";
+import getSecret from "./getSecret";
 dotenv.config();
 
-console.log(process.env.JWT_SECRET);
 export const verifyToken = (token: string) => {
   try {
-    const decoded = verify(token, process.env.JWT_SECRET ?? "secret");
+    const secret = getSecret();
+    const decoded = verify(token, secret);
     return decoded;
   } catch (error) {
     return error;
