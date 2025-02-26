@@ -5,16 +5,12 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
 import { fileModel } from "../models/file.model";
 import { userModel } from "../models/user.model";
+import {config} from "dotenv";
+import { generateFileName } from "../utils/generateFileName";
 
-export const uploadFile = async (req: Request, res: Response) => {
-  res.status(200).json({ message: "File uploaded successfully" });
-  return;
-};
+const BUCKET_NAME = process.env.AWS_BUCKET_NAME ?? "";
 
 export const editFile = async (req: Request, res: Response) => {};
-
-const generateFileName = (extension = "") =>
-  `${crypto.randomBytes(16).toString("hex")}${extension}`;
 
 export const generateUploadURL = async (req: Request, res: Response) => {
   try {
@@ -24,7 +20,7 @@ export const generateUploadURL = async (req: Request, res: Response) => {
     const fileKey = `uploads/${generateFileName(extension)}`;
 
     const command = new PutObjectCommand({
-      Bucket: "coursevita-kc",
+      Bucket: BUCKET_NAME,
       Key: fileKey,
       ContentType: fileType || "application/octet-stream",
     });
@@ -39,6 +35,7 @@ export const generateUploadURL = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 export const saveFile = async (req: Request, res: Response) => {
   try {
     const { name, type, size, url } = req.body;
@@ -66,8 +63,6 @@ export const saveFile = async (req: Request, res: Response) => {
   }
 };
 
-
-
 export const getDownloadUrl = async (req: Request, res: Response) => {
   try {
     const { fileId } = req.body;
@@ -76,20 +71,18 @@ export const getDownloadUrl = async (req: Request, res: Response) => {
       return;
     }
 
-    // Fetch file details from DB
     const file = await fileModel.findById(fileId);
     if (!file) {
       res.status(404).json({ error: "File not found" });
       return;
     }
 
-    // Generate Signed URL using the stored `key`
     const command = new GetObjectCommand({
-      Bucket: "coursevita-kc",
+      Bucket: BUCKET_NAME,
       Key: file.key,
     });
 
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 300 }); // 5 min expiry
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 300 }); 
     res.json({ downloadUrl: url });
     return;
   } catch (error) {
@@ -109,24 +102,20 @@ export const deleteFile = async (req: Request, res: Response) => {
       return;
     }
 
-    // Find file in DB
     const file = await fileModel.findById(fileId);
     if (!file) {
       res.status(404).json({ error: "File not found" });
       return;
     }
 
-    // Delete from S3
     if (file.key) {
       const deleteCommand = new DeleteObjectCommand({
-        Bucket: "coursevita-kc",
+        Bucket: BUCKET_NAME,
         Key: file.key,
       });
-
       await s3Client.send(deleteCommand);
     }
 
-    // Delete file from DB
     await fileModel.findByIdAndDelete(fileId);
     await userModel.findByIdAndUpdate(admin, { $pull: { files: fileId } });
 

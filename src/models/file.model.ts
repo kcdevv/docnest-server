@@ -18,9 +18,6 @@ const FileSchema = new Schema(
       type: String,
       required: true,
     },
-    avatar: {
-      type: String,
-    },
     admin: {
       type: Schema.Types.ObjectId,
       ref: "User",

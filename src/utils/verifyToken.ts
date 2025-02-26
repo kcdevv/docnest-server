@@ -1,12 +1,10 @@
-import { verify } from "jsonwebtoken";
-import dotenv from "dotenv";
+import { JwtPayload, verify } from "jsonwebtoken";
 import getSecret from "./getSecret";
-dotenv.config();
 
 export const verifyToken = (token: string) => {
   try {
     const secret = getSecret();
-    const decoded = verify(token, secret);
+    const decoded = verify(token, secret) as JwtPayload;
     return decoded;
   } catch (error) {
     return error;

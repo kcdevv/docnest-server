@@ -64,6 +64,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
   await user.save();
   res.status(200).json({ message: "Profile updated successfully" });
 };
+
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.userId;
@@ -71,8 +72,6 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
-
-    console.log("Fetching profile for userId:", userId); // Debugging
 
     const user = await userModel.findById(userId).select("-password").populate("files");
 

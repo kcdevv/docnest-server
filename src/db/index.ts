@@ -3,7 +3,8 @@ import { config } from "dotenv";
 
 const connectDB = async () => {
   try {
-    const dbUrl = "mongodb://localhost:27017/files";
+    const dbUrl = process.env.MONGO_URI ?? "mongodb://localhost:27017/files";
+
     await mongoose.connect(dbUrl);
     const db = mongoose.connection;
     db.on("open", () => {
@@ -17,4 +18,4 @@ const connectDB = async () => {
   }
 };
 
-export default connectDB
+export default connectDB;
