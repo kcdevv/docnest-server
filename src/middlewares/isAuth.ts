@@ -1,18 +1,24 @@
 import { Request, Response, NextFunction } from "express";
-import { verifyToken } from "../utils/verifyToken";
-import { JwtPayload } from "jsonwebtoken";
+import { verify } from "jsonwebtoken";
 
-const isAuth = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.headers.authorization || req.cookies.token;
-  const isVerified = verifyToken(token) as JwtPayload;
-  if (!isVerified) {
-    res.status(401).json({ message: "Unauthorized" });
+const isAuth = async (req: Request, res: Response, next: NextFunction) => {
+  const token = req.headers.authorization?.split(" ")[1] ?? "";
+  if (!token) {
+    res.json({ message: "Unauthorized" });
     return;
   }
-  req.userId = isVerified.id;
-  console.log(req.userId);
+  const decoded = verify(token, process.env.CLERK_SECRET_KEY!, {
+    algorithms: ["RS256"],
+  });
+  
+  if (!decoded) {
+    res.json({ message: "Unauthorized" });
+    return;
+  }
+
+  const userId = decoded.sub as string;
+  req.userId = userId;
   next();
-  return;
 };
 
 export default isAuth;

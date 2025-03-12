@@ -1,11 +1,14 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { s3Client } from "../aws-config";
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import crypto from "crypto";
 import { fileModel } from "../models/file.model";
 import { userModel } from "../models/user.model";
-import {config} from "dotenv";
+import { config } from "dotenv";
 import { generateFileName } from "../utils/generateFileName";
 
 const BUCKET_NAME = process.env.AWS_BUCKET_NAME ?? "";
@@ -25,7 +28,9 @@ export const generateUploadURL = async (req: Request, res: Response) => {
       ContentType: fileType || "application/octet-stream",
     });
 
-    const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 60 * 60 * 24 });
+    const uploadUrl = await getSignedUrl(s3Client, command, {
+      expiresIn: 60 * 60 * 24,
+    });
 
     res.json({
       uploadUrl,
@@ -82,7 +87,7 @@ export const getDownloadUrl = async (req: Request, res: Response) => {
       Key: file.key,
     });
 
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 300 }); 
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 300 });
     res.json({ downloadUrl: url });
     return;
   } catch (error) {
@@ -124,6 +129,23 @@ export const deleteFile = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error deleting file:", error);
     res.status(500).json({ error: "Failed to delete file" });
+    return;
+  }
+};
+
+export const getFiles = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const admin = req.userId;
+    const files = await fileModel.find({ admin });
+    res.status(200).json(files);
+    return;
+  } catch (error) {
+    console.error("Error fetching files:", error);
+    res.status(500).json({ error: "Failed to fetch files" });
     return;
   }
 };
