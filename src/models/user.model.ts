@@ -6,6 +6,22 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  email: {
+    type: String,
+    required: true,
+  },
+  firstName: {
+    type: String,
+    required: true,
+  },
+  lastName: {
+    type: String,
+    required: true,
+  },
+  avatar: {
+    type: String,
+    required: false,
+  },
   files: [
     {
       type: Schema.Types.ObjectId,

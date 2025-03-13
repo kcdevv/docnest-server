@@ -1,40 +1,92 @@
 import { Request, Response } from "express";
 import { userModel } from "../models/user.model";
-import { hashSync, compareSync } from "bcryptjs";
 import razorpay from "../razorpay";
 import crypto from "crypto";
+import { clerkClient } from "@clerk/express";
+import { Webhook } from "svix";
 
+const CLERK_WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET as string;
+
+export const userCreated = async (req: Request, res: Response) => {
+  try {
+    const webhookId = req.headers["webhook-id"] as string;
+    const webhookTimestamp = req.headers["webhook-timestamp"] as string;
+    const webhookSignature = req.headers["webhook-signature"] as string;
+
+    if (!webhookId || !webhookTimestamp || !webhookSignature) {
+      throw new Error("Missing webhook headers");
+    }
+
+    const webhookHeaders = {
+      "webhook-id": webhookId,
+      "webhook-timestamp": webhookTimestamp,
+      "webhook-signature": webhookSignature,
+    };
+
+    const payload = JSON.stringify(req.body);
+    const wh = new Webhook(CLERK_WEBHOOK_SECRET);
+    const evt = wh.verify(payload, webhookHeaders) as any;
+
+    if (evt.type === "user.created") {
+      await userModel.create({
+        clerkId: evt.data.id,
+        email: evt.data.email,
+        firstName: evt.data.firstName,
+        lastName: evt.data.lastName,
+        isPremium: false,
+      });
+    }
+
+    if (evt.type === "user.deleted") {
+      await userModel.findOneAndDelete({
+        clerkId: evt.data.id,
+      });
+    }
+
+    res.status(200).json({ message: "User created in database" });
+    return;
+  } catch (err) {
+    console.error("Webhook verification failed:", err);
+    res.status(400).send("Invalid webhook signature");
+    return;
+  }
+};
 
 export const updateUser = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const { fullName, avatar, password } = req.body;
-  const userId = req.userId;
+  try {
+    const { firstName, lastName } = req.body;
+    const userId = req.userId;
 
-  if (!userId) {
-    res.status(401).json({ message: "Unauthorized" });
-    return;
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const user = await clerkClient.users.getUser(userId);
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const updatePayload: Record<string, any> = {};
+    if (firstName) updatePayload.firstName = firstName;
+    if (lastName) updatePayload.lastName = lastName;
+
+    if (Object.keys(updatePayload).length === 0) {
+      res.status(400).json({ message: "No valid fields to update" });
+      return;
+    }
+
+    await clerkClient.users.updateUser(userId, updatePayload);
+
+    res.status(200).json({ message: "Profile updated successfully" });
+  } catch (error) {
+    console.error("Update Error:", error);
+    res.status(500).json({ error: "Failed to update user" });
   }
-
-  const user = await userModel.findById(userId);
-  if (!user) {
-    res.status(404).json({ message: "User not found" });
-    return;
-  }
-
-  if (fullName) user.fullName = fullName;
-  if (avatar) user.avatar = avatar;
-  if (password) user.password = hashSync(password, 10);
-
-  await user.save();
-  res.status(200).json({ message: "Profile updated successfully" });
-};
-
-export const logoutUser = async (req: Request, res: Response) => {
-  res.clearCookie("token");
-  res.status(200).json({ message: "Logged out successfully" });
-  return;
 };
 
 export const pay = async (req: Request, res: Response) => {

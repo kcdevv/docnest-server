@@ -29,6 +29,7 @@
     "express-rate-limit": "^7.5.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.3",
-    "razorpay": "^2.9.5"
+    "razorpay": "^2.9.5",
+    "svix": "^1.61.4"
   }
 }
