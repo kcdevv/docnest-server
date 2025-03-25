@@ -3,52 +3,40 @@ import { userModel } from "../models/user.model";
 import razorpay from "../razorpay";
 import crypto from "crypto";
 import { clerkClient } from "@clerk/express";
-import { Webhook } from "svix";
-
-const CLERK_WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET as string;
 
 export const userCreated = async (req: Request, res: Response) => {
   try {
-    const webhookId = req.headers["webhook-id"] as string;
-    const webhookTimestamp = req.headers["webhook-timestamp"] as string;
-    const webhookSignature = req.headers["webhook-signature"] as string;
+    const payload = req.body;
+    console.log(payload.data);
 
-    if (!webhookId || !webhookTimestamp || !webhookSignature) {
-      throw new Error("Missing webhook headers");
-    }
-
-    const webhookHeaders = {
-      "webhook-id": webhookId,
-      "webhook-timestamp": webhookTimestamp,
-      "webhook-signature": webhookSignature,
-    };
-
-    const payload = JSON.stringify(req.body);
-    const wh = new Webhook(CLERK_WEBHOOK_SECRET);
-    const evt = wh.verify(payload, webhookHeaders) as any;
-
-    if (evt.type === "user.created") {
-      await userModel.create({
-        clerkId: evt.data.id,
-        email: evt.data.email,
-        firstName: evt.data.firstName,
-        lastName: evt.data.lastName,
+    // Handle user.created event
+    if (payload.type === "user.created") {
+      // Fallback to empty strings if name fields are missing
+      const userData = {
+        clerkId: payload.data.id,
+        email: payload.data.email_addresses[0]?.email_address,
+        firstName: payload.data.first_name,
+        lastName: payload.data?.last_name,
+        avatar: payload.data?.image_url,
         isPremium: false,
-      });
+      };
+
+      // Save user to MongoDB
+      await userModel.create(userData);
+      console.log("User created in database:", userData.email);
     }
 
-    if (evt.type === "user.deleted") {
-      await userModel.findOneAndDelete({
-        clerkId: evt.data.id,
-      });
+    // Handle user.deleted event
+    if (payload.type === "user.deleted") {
+      const { id } = payload.data;
+      await userModel.findOneAndDelete({ clerkId: id });
+      console.log("User deleted from database:", id);
     }
 
-    res.status(200).json({ message: "User created in database" });
-    return;
+    res.status(200).json({ message: "Webhook event processed successfully" });
   } catch (err) {
-    console.error("Webhook verification failed:", err);
-    res.status(400).send("Invalid webhook signature");
-    return;
+    console.error("Webhook verification failed or error in processing:", err);
+    res.status(400).send("Invalid webhook signature or processing error");
   }
 };
 

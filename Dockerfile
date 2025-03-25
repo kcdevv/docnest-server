@@ -8,7 +8,7 @@ RUN npm install
 
 COPY . .
 
-RUN npm buildc
+RUN npm build
 
 EXPOSE 4000
 
