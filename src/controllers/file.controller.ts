@@ -33,7 +33,7 @@ export const generateUploadURL = async (req: Request, res: Response) => {
     });
 
     res.json({
-      uploadUrl,
+      url: uploadUrl,
     });
   } catch (error) {
     console.error("Error generating upload URL:", error);

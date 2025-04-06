@@ -7,7 +7,7 @@ const isAuth = async (req: Request, res: Response, next: NextFunction) => {
     res.json({ message: "Unauthorized" });
     return;
   }
-  const decoded = verify(token, process.env.CLERK_SECRET_KEY!, {
+  const decoded = verify(token, process.env.CLERK_PUB_KEY ?? "", {
     algorithms: ["RS256"],
   });
   

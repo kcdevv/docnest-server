@@ -21,12 +21,10 @@ export const userCreated = async (req: Request, res: Response) => {
         isPremium: false,
       };
 
-      // Save user to MongoDB
       await userModel.create(userData);
       console.log("User created in database:", userData.email);
     }
 
-    // Handle user.deleted event
     if (payload.type === "user.deleted") {
       const { id } = payload.data;
       await userModel.findOneAndDelete({ clerkId: id });
