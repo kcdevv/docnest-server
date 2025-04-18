@@ -6,13 +6,7 @@ const connectDB = async () => {
     const dbUrl = process.env.MONGO_URI ?? "mongodb://localhost:27017/files";
 
     await mongoose.connect(dbUrl);
-    const db = mongoose.connection;
-    db.on("open", () => {
-      console.log("Connected to database");
-    });
-    db.on("error", () => {
-      throw new Error("Failed connecting database");
-    });
+    console.log("MongoDB connected successfully");
   } catch (err) {
     console.error(err);
   }

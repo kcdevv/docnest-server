@@ -8,7 +8,7 @@ import limiter from "./middlewares/ratelimit";
 const app: Express = express();
 
 dotenv.config();
-app.use(limiter);
+// app.use(limiter);
 app.use(cookieParser());
 
 app.set("trust proxy", true);
